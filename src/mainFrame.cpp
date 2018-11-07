@@ -7,6 +7,10 @@
 #include "mainFrame.h"
 #include "logFileWindow.h"
 #include "logCompareApp.h"
+#include "utilities.h"
+
+// Standard C++ headers
+#include <sstream>
 
 //==========================================================================
 // Class:			MainFrame
@@ -112,6 +116,81 @@ void MainFrame::SetProperties()
 
 void MainFrame::UpdateComparison()
 {
+	struct RefPoint
+	{
+		LogFileWindow* logWindow;
+		std::istringstream ss;
+		std::chrono::system_clock::time_point nextTime;
+		std::string text;
+		std::string nextChunk;
+		unsigned int linesAdded;
+		unsigned int linesAddedSincePrint = 0;
+	};
+
+	std::chrono::system_clock::time_point nextPrintTime = std::chrono::system_clock::time_point::max();
+	std::vector<RefPoint> refs;
+	for (const auto& w : logWindows)
+	{
+		if (w->GetOriginalContents().empty())
+			continue;
+
+		RefPoint r;
+		r.logWindow = w;
+		r.ss.str(w->GetOriginalContents());
+
+		r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime);
+		refs.push_back(std::move(r));
+
+		if (r.nextTime < nextPrintTime)
+			nextPrintTime = r.nextTime;
+	}
+
+	unsigned int maxLinesAdded(1);
+	while (maxLinesAdded > 0)
+	{
+		maxLinesAdded = 0;
+		std::vector<RefPoint*> addedTo;
+		for (auto& r : refs)
+		{
+			if (r.nextTime <= nextPrintTime)
+			{
+				r.text.append(r.linesAddedSincePrint, '\n');
+				r.text.append(r.nextChunk);
+				r.linesAddedSincePrint = 0;
+				r.nextChunk.clear();
+
+				r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime);
+				addedTo.push_back(&r);
+				if (r.linesAdded > maxLinesAdded)
+					maxLinesAdded = r.linesAdded;
+			}
+		}
+
+		nextPrintTime = std::chrono::system_clock::time_point::max();
+		for (auto& r : refs)
+		{
+			bool added(false);
+			for (const auto& a : addedTo)
+			{
+				if (a == &r)
+				{
+					added = true;
+					break;
+				}
+			}
+
+			if (added)
+				r.linesAddedSincePrint = maxLinesAdded - r.linesAdded;
+			else
+				r.linesAddedSincePrint += maxLinesAdded;
+
+			if (r.nextTime < nextPrintTime)
+				nextPrintTime = r.nextTime;
+		}
+	}
+
+	for (const auto& r : refs)
+		r.logWindow->SetText(r.text);
 }
 
 void MainFrame::AddLogWindow()
@@ -151,4 +230,10 @@ void MainFrame::RemoveLogWindow(LogFileWindow* window)
 		}
 		assert(false);// should never reach here
 	}
+}
+
+void MainFrame::SetScrollPosition(const unsigned int& position)
+{
+	for (auto& w : logWindows)
+		w->SetScrollPosition(position);
 }

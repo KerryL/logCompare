@@ -9,7 +9,11 @@
 // wxWidgets headers
 #include <wx/wx.h>
 
+// Standard C++ headers
+#include <memory>
+
 class MainFrame;
+class LogFile;
 
 class LogFileWindow : public wxPanel
 {
@@ -25,13 +29,18 @@ public:
 	~LogFileWindow() = default;
 
 	bool Load(const wxString& fileName);
+	void SetText(const wxString& s);
+	std::string GetOriginalContents() const;
+	void SetScrollPosition(const unsigned int& position);
 
 private:
 	MainFrame& parent;
+	std::unique_ptr<LogFile> logFile;
 
 	void CreateControls(const ButtonConfig& buttonConfig);
 	wxSizer* CreateButtonSizer(const ButtonConfig& buttonConfig);
 
+	wxScrolledWindow* scrolledWin;
 	wxTextCtrl* mainTextCtrl;
 
 	enum EventIDs
@@ -44,7 +53,8 @@ private:
 	void OnOpenClick(wxCommandEvent& event);
 	void OnAddClick(wxCommandEvent& event);
 	void OnRemoveClick(wxCommandEvent& event);
-	void OnScrollChange(wxCommandEvent& event);
+
+	void OnScrollChange(wxScrollEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };

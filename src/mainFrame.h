@@ -24,6 +24,7 @@ public:
 	void AddLogWindow();
 	void RemoveLogWindow(LogFileWindow* window);
 	void UpdateComparison();
+	void SetScrollPosition(const unsigned int& position);
 
 private:
 	// Functions that do some of the frame initialization and control positioning

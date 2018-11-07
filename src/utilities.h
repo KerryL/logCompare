@@ -15,6 +15,7 @@ namespace Utilities
 
 bool LineHasTimestamp(const std::string& line);
 std::chrono::system_clock::time_point GetTimeStamp(const std::string& line);
+unsigned int GetNextChunk(std::istringstream& ss, std::string& chunk, std::chrono::system_clock::time_point& nextTime);
 
 }// namespace Utilities
 

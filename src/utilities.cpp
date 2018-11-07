@@ -9,6 +9,7 @@
 // Standard C++ headers
 #include <sstream>
 #include <iomanip>
+#include <cassert>
 
 namespace Utilities
 {
@@ -40,6 +41,26 @@ std::chrono::system_clock::time_point GetTimeStamp(const std::string& line)
 		return timePoint;
 
 	return timePoint + std::chrono::milliseconds(milliSecs);
+}
+
+unsigned int GetNextChunk(std::istringstream& ss, std::string& chunk, std::chrono::system_clock::time_point& nextTime)
+{
+	assert(chunk.empty());
+
+	unsigned int lineCount(0);
+	std::string line;
+	while (std::getline(ss, line))
+	{
+		chunk.append(line + '\n');
+		++lineCount;
+		if (Utilities::LineHasTimestamp(line))
+		{
+			nextTime = Utilities::GetTimeStamp(line);
+			break;
+		}
+	}
+
+	return lineCount;
 }
 
 }// namespace Utilities

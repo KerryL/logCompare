@@ -6,6 +6,8 @@
 // Local headers
 #include "logFileWindow.h"
 #include "mainFrame.h"
+#include "dropTarget.h"
+#include "logFile.h"
 
 LogFileWindow::LogFileWindow(MainFrame& parent, const ButtonConfig& buttonConfig) : wxPanel(&parent), parent(parent)
 {
@@ -14,8 +16,17 @@ LogFileWindow::LogFileWindow(MainFrame& parent, const ButtonConfig& buttonConfig
 
 bool LogFileWindow::Load(const wxString& fileName)
 {
-	// TODO
-	return false;
+	try
+	{
+		logFile = std::make_unique<LogFile>(fileName.ToStdString());
+	}
+	catch (const std::exception&)
+	{
+		return false;
+	}
+
+	parent.UpdateComparison();
+	return true;
 }
 
 void LogFileWindow::CreateControls(const ButtonConfig& buttonConfig)
@@ -23,8 +34,15 @@ void LogFileWindow::CreateControls(const ButtonConfig& buttonConfig)
 	wxSizer* mainSizer(new wxBoxSizer(wxVERTICAL));
 	mainSizer->Add(CreateButtonSizer(buttonConfig), wxSizerFlags().Expand());
 
-	mainTextCtrl = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_RICH2 | wxHSCROLL);
-	mainSizer->Add(mainTextCtrl, wxSizerFlags().Expand().Proportion(1));
+	//mainTextCtrl = new wxScrolled<wxTextCtrl>(this, wxID_ANY);//, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_RICH2 | wxHSCROLL | wxTE_NO_VSCROLL);
+	scrolledWin = new wxScrolledWindow(this);
+	mainTextCtrl = new wxTextCtrl(scrolledWin, wxID_ANY);
+	wxSizer* s(new wxBoxSizer(wxVERTICAL));
+	s->Add(mainTextCtrl, wxSizerFlags().Expand().Proportion(1));
+	scrolledWin->SetSizer(s);
+
+	mainTextCtrl->SetDropTarget(new DropTarget(*this));
+	mainSizer->Add(scrolledWin, wxSizerFlags().Expand().Proportion(1));
 
 	SetSizerAndFit(mainSizer);
 }
@@ -49,39 +67,30 @@ wxSizer* LogFileWindow::CreateButtonSizer(const ButtonConfig& buttonConfig)
 }
 
 BEGIN_EVENT_TABLE(LogFileWindow, wxPanel)
-	EVT_BUTTON(IdOpen,		OnOpenClick)
-	EVT_BUTTON(IdAdd,		OnAddClick)
-	EVT_BUTTON(IdRemove,	OnRemoveClick)
+	EVT_BUTTON(IdOpen,				OnOpenClick)
+	EVT_BUTTON(IdAdd,				OnAddClick)
+	EVT_BUTTON(IdRemove,			OnRemoveClick)
+	EVT_SCROLL(						OnScrollChange)
 END_EVENT_TABLE()
 
 void LogFileWindow::OnOpenClick(wxCommandEvent& WXUNUSED(event))
 {
-	wxString wildcard("All files (*)|*");
-
-	wxArrayString fileList = LibPlot2D::GuiUtilities::GetFileNameFromUser(this,
-		_T("Open Data File"), wxEmptyString, wxEmptyString, wildcard,
-		wxFD_OPEN | wxFD_MULTIPLE | wxFD_FILE_MUST_EXIST);
-
+	const wxString wildcard("All files (*)|*");
 	wxFileDialog dialog(&parent, _T("Open"), wxEmptyString, wxEmptyString,
-		wildcard, style);
+		wildcard, wxFD_OPEN /*| wxFD_MULTIPLE*/ | wxFD_FILE_MUST_EXIST);
 
 	dialog.CenterOnParent();
+	wxArrayString pathsAndFileNames;
 	if (dialog.ShowModal() == wxID_OK)
+		dialog.GetPaths(pathsAndFileNames);
+
+	for (const auto& fn : pathsAndFileNames)
 	{
-		// If this was an open dialog, we want to get all of the selected paths,
-		// otherwise, just get the one selected path
-		if (style & wxFD_OPEN)
-			dialog.GetPaths(pathsAndFileNames);
-		else
-			pathsAndFileNames.Add(dialog.GetPath());
+		if (!Load(fn))
+		{
+			// TODO:  Do what?
+		}
 	}
-
-	return pathsAndFileNames;
-
-	if (fileList.GetCount() == 0)
-		return;
-
-	mPlotInterface.LoadFiles(fileList);
 }
 
 void LogFileWindow::OnAddClick(wxCommandEvent& WXUNUSED(event))
@@ -94,6 +103,28 @@ void LogFileWindow::OnRemoveClick(wxCommandEvent& WXUNUSED(event))
 	parent.RemoveLogWindow(this);
 }
 
-void LogFileWindow::OnScrollChange(wxCommandEvent& event)
+void LogFileWindow::SetText(const wxString& s)
 {
+	mainTextCtrl->SetValue(s);
+}
+
+std::string LogFileWindow::GetOriginalContents() const
+{
+	if (!logFile)
+		return std::string();
+
+	return logFile->GetContents();
+}
+
+void LogFileWindow::SetScrollPosition(const unsigned int& position)
+{
+	scrolledWin->SetScrollPos(wxVERTICAL, position);
+}
+
+void LogFileWindow::OnScrollChange(wxScrollEvent& event)
+{
+	if (event.GetOrientation() == wxHORIZONTAL)
+		return;
+
+	parent.SetScrollPosition(event.GetPosition());
 }

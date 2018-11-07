@@ -6,21 +6,21 @@
 #ifndef LOG_FILE_H_
 #define LOG_FILE_H_
 
-// wxWidgets headers
-#include <wx/wx.h>
-
 // Standard C++ headers
 #include <chrono>
+#include <string>
 
 class LogFile
 {
 public:
-	explicit LogFile(const wxString& fileName);
+	explicit LogFile(const std::string& fileName);
 
-	wxString GetContentsUpTo(const std::chrono::system_clock::time_point& upToTime);
+	const std::string& GetContents() const { return originalFileContents; }
 
 private:
-	const wxString originalFileContents;
+	std::string originalFileContents;
+
+	static bool ReadFile(const std::string& fileName, std::string& contents);
 };
 
 #endif// LOG_FILE_H_
