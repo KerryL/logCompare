@@ -34,9 +34,8 @@ void LogFileWindow::CreateControls(const ButtonConfig& buttonConfig)
 	wxSizer* mainSizer(new wxBoxSizer(wxVERTICAL));
 	mainSizer->Add(CreateButtonSizer(buttonConfig), wxSizerFlags().Expand());
 
-	//mainTextCtrl = new wxScrolled<wxTextCtrl>(this, wxID_ANY);//, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_RICH2 | wxHSCROLL | wxTE_NO_VSCROLL);
-	scrolledWin = new wxScrolledWindow(this);
-	mainTextCtrl = new wxTextCtrl(scrolledWin, wxID_ANY);
+	scrolledWin = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxALWAYS_SHOW_SB | wxVSCROLL);
+	mainTextCtrl = new wxTextCtrl(scrolledWin, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_RICH2 | wxTE_NO_VSCROLL | wxTE_DONTWRAP);
 	wxSizer* s(new wxBoxSizer(wxVERTICAL));
 	s->Add(mainTextCtrl, wxSizerFlags().Expand().Proportion(1));
 	scrolledWin->SetSizer(s);
@@ -70,7 +69,7 @@ BEGIN_EVENT_TABLE(LogFileWindow, wxPanel)
 	EVT_BUTTON(IdOpen,				OnOpenClick)
 	EVT_BUTTON(IdAdd,				OnAddClick)
 	EVT_BUTTON(IdRemove,			OnRemoveClick)
-	EVT_SCROLL(						OnScrollChange)
+	EVT_SCROLLWIN(					OnScrollChange)
 END_EVENT_TABLE()
 
 void LogFileWindow::OnOpenClick(wxCommandEvent& WXUNUSED(event))
@@ -121,7 +120,7 @@ void LogFileWindow::SetScrollPosition(const unsigned int& position)
 	scrolledWin->SetScrollPos(wxVERTICAL, position);
 }
 
-void LogFileWindow::OnScrollChange(wxScrollEvent& event)
+void LogFileWindow::OnScrollChange(wxScrollWinEvent& event)
 {
 	if (event.GetOrientation() == wxHORIZONTAL)
 		return;

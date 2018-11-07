@@ -54,7 +54,7 @@ private:
 	void OnAddClick(wxCommandEvent& event);
 	void OnRemoveClick(wxCommandEvent& event);
 
-	void OnScrollChange(wxScrollEvent& event);
+	void OnScrollChange(wxScrollWinEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };
