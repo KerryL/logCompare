@@ -8,6 +8,7 @@
 
 // wxWidgets headers
 #include <wx/wx.h>
+#include <wx/stc/stc.h>
 
 // Standard C++ headers
 #include <memory>
@@ -40,8 +41,7 @@ private:
 	void CreateControls(const ButtonConfig& buttonConfig);
 	wxSizer* CreateButtonSizer(const ButtonConfig& buttonConfig);
 
-	wxScrolledWindow* scrolledWin;
-	wxTextCtrl* mainTextCtrl;
+	wxStyledTextCtrl* mainTextCtrl;
 
 	enum EventIDs
 	{
@@ -54,7 +54,7 @@ private:
 	void OnAddClick(wxCommandEvent& event);
 	void OnRemoveClick(wxCommandEvent& event);
 
-	void OnScrollChange(wxScrollWinEvent& event);
+	void OnScrollChange(wxStyledTextEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };

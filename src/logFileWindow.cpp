@@ -34,15 +34,19 @@ void LogFileWindow::CreateControls(const ButtonConfig& buttonConfig)
 	wxSizer* mainSizer(new wxBoxSizer(wxVERTICAL));
 	mainSizer->Add(CreateButtonSizer(buttonConfig), wxSizerFlags().Expand());
 
-	scrolledWin = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxALWAYS_SHOW_SB | wxVSCROLL);
-	mainTextCtrl = new wxTextCtrl(scrolledWin, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_RICH2 | wxTE_NO_VSCROLL | wxTE_DONTWRAP);
-	wxSizer* s(new wxBoxSizer(wxVERTICAL));
-	s->Add(mainTextCtrl, wxSizerFlags().Expand().Proportion(1));
-	scrolledWin->SetSizer(s);
-
+	mainTextCtrl = new wxStyledTextCtrl(this);
 	mainTextCtrl->SetDropTarget(new DropTarget(*this));
-	mainSizer->Add(scrolledWin, wxSizerFlags().Expand().Proportion(1));
+	mainTextCtrl->SetWrapMode(wxSTC_WRAP_NONE);
 
+	/*if (buttonConfig == ButtonConfig::FirstWindow)
+	{
+		mainTextCtrl->SetMarginWidth(0, 30);
+		mainTextCtrl->SetMarginType(0, wxSTC_MARGIN_NUMBER);
+		mainTextCtrl->StyleSetForeground(wxSTC_STYLE_LINENUMBER, wxColor(75, 75, 75));
+		mainTextCtrl->StyleSetBackground(wxSTC_STYLE_LINENUMBER, wxColor(220, 220, 220));
+	}*/
+
+	mainSizer->Add(mainTextCtrl, wxSizerFlags().Expand().Proportion(1));
 	SetSizerAndFit(mainSizer);
 }
 
@@ -66,10 +70,10 @@ wxSizer* LogFileWindow::CreateButtonSizer(const ButtonConfig& buttonConfig)
 }
 
 BEGIN_EVENT_TABLE(LogFileWindow, wxPanel)
-	EVT_BUTTON(IdOpen,				OnOpenClick)
-	EVT_BUTTON(IdAdd,				OnAddClick)
-	EVT_BUTTON(IdRemove,			OnRemoveClick)
-	EVT_SCROLLWIN(					OnScrollChange)
+	EVT_BUTTON(IdOpen,			OnOpenClick)
+	EVT_BUTTON(IdAdd,			OnAddClick)
+	EVT_BUTTON(IdRemove,		OnRemoveClick)
+	EVT_STC_PAINTED(wxID_ANY,	OnScrollChange)
 END_EVENT_TABLE()
 
 void LogFileWindow::OnOpenClick(wxCommandEvent& WXUNUSED(event))
@@ -117,13 +121,17 @@ std::string LogFileWindow::GetOriginalContents() const
 
 void LogFileWindow::SetScrollPosition(const unsigned int& position)
 {
-	scrolledWin->SetScrollPos(wxVERTICAL, position);
+	/*if (m_text1->GetFirstVisibleLine() != fvl)
+        {
+            m_text1->ScrollToLine(fvl);
+            // ShowLines
+        }
+	mainTextCtrl->SetScrollPos(wxVERTICAL, position);*/
+	mainTextCtrl->ScrollToLine(position);
 }
 
-void LogFileWindow::OnScrollChange(wxScrollWinEvent& event)
+void LogFileWindow::OnScrollChange(wxStyledTextEvent& event)
 {
-	if (event.GetOrientation() == wxHORIZONTAL)
-		return;
-
-	parent.SetScrollPosition(event.GetPosition());
+	const auto line(mainTextCtrl->GetFirstVisibleLine());
+	parent.SetScrollPosition(line);
 }

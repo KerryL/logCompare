@@ -225,6 +225,7 @@ void MainFrame::RemoveLogWindow(LogFileWindow* window)
 			{
 				logWindows.erase(it);
 				PostSizeEvent();
+				UpdateComparison();
 				return;
 			}
 		}
