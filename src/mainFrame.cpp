@@ -58,8 +58,6 @@ void MainFrame::CreateControls()
 	AddLogWindow();
 	AddLogWindow();
 
-	SetMinSize(wxSize(600, 400));// TODO:  Has no effect?
-
 	SetSizerAndFit(topSizer);
 }
 
@@ -115,7 +113,7 @@ void MainFrame::UpdateComparison()
 {
 	LogFileComparer comparer;
 	for (const auto& w : logWindows)
-		comparer.AddLog(w->GetOriginalContents());
+		comparer.AddLog(w->GetOriginalContents(), w->GetTimestampFormat());
 
 	comparer.DoComparison();
 

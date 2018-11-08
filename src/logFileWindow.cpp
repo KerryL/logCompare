@@ -45,9 +45,18 @@ void LogFileWindow::CreateControls(const ButtonConfig& buttonConfig)
 	wxSizer* mainSizer(new wxBoxSizer(wxVERTICAL));
 	mainSizer->Add(CreateButtonSizer(buttonConfig), wxSizerFlags().Expand());
 
+	wxSizer* timestampSizer(new wxBoxSizer(wxHORIZONTAL));
+	timestampSizer->Add(new wxStaticText(this, wxID_ANY, _T("TS Format:")));
+	timestampTextCtrl = new wxTextCtrl(this, wxID_ANY, _T("%m/%d/%Y,%H:%M:%S:%_"));
+	timestampTextCtrl->SetToolTip(_T("Timestamp formats can be described using standard C language identifiers.  Additionally, %_ is supported to indicate a 3-digit millisecond field."));
+
+	timestampSizer->Add(timestampTextCtrl, wxSizerFlags().Expand().Proportion(1).Border(wxLEFT, 5));
+	mainSizer->Add(timestampSizer, wxSizerFlags().Expand().Border(wxALL, 5));
+
 	mainTextCtrl = new wxStyledTextCtrl(this);
 	mainTextCtrl->SetDropTarget(new DropTarget(*this));
 	mainTextCtrl->SetWrapMode(wxSTC_WRAP_NONE);
+	mainTextCtrl->SetMinSize(wxSize(400,400));
 
 	/*if (buttonConfig == ButtonConfig::FirstWindow)
 	{
@@ -90,6 +99,7 @@ BEGIN_EVENT_TABLE(LogFileWindow, wxPanel)
 	EVT_BUTTON(IdRemove,		OnRemoveClick)
 	EVT_MENU(IdFind,			OnFindShortcut)
 	EVT_STC_PAINTED(wxID_ANY,	OnScrollChange)
+	EVT_TEXT(wxID_ANY,			OnTimestampFormatChange)
 END_EVENT_TABLE()
 
 void LogFileWindow::OnOpenClick(wxCommandEvent& WXUNUSED(event))
@@ -152,6 +162,11 @@ void LogFileWindow::OnScrollChange(wxStyledTextEvent& WXUNUSED(event))
 	parent.SetScrollPosition(line);
 }
 
+void LogFileWindow::OnTimestampFormatChange(wxCommandEvent& WXUNUSED(event))
+{
+	parent.UpdateComparison();
+}
+
 void LogFileWindow::DoFind(const wxString& s, const int& flags)
 {
 	const double styleId(0);
@@ -199,6 +214,11 @@ void LogFileWindow::DoFind(const wxString& s, const int& flags)
 void LogFileWindow::ClearFind()
 {
 	mainTextCtrl->IndicatorClearRange(0, mainTextCtrl->GetLastPosition());
+}
+
+std::string LogFileWindow::GetTimestampFormat() const
+{
+	return timestampTextCtrl->GetValue().ToStdString();
 }
 
 FindDialog::FindDialog(LogFileWindow& parent) : wxFindReplaceDialog(&parent, &data, _T("Find")), parent(parent)

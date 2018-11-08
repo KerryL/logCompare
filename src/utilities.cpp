@@ -14,36 +14,49 @@
 namespace Utilities
 {
 
-bool LineHasTimestamp(const std::string& line)
+bool LineHasTimestamp(const std::string& line, const std::string& timestampFormat)
 {
-	if (line.size() < 24)
-		return false;
-	if (line[2] != '/' ||
-		line[5] != '/' ||
-		line[10] != ',' ||
-		line[13] != ':' ||
-		line[16] != ':' ||
-		line[19] != ':')
-		return false;
-	return true;// TODO:  More thorough/more efficient check?  Handle variety of timestamps?
-}
-
-std::chrono::system_clock::time_point GetTimeStamp(const std::string& line)
-{
+	const std::string format(GetFormatBeforeMilliseconds(timestampFormat));
 	std::istringstream ss(line);
 	std::tm tm;
-	ss >> std::get_time(&tm, "%m/%d/%Y,%H:%M:%S");
-	auto timePoint(std::chrono::system_clock::from_time_t(std::mktime(&tm)));
-
-	ss.ignore();// ignore the next ':'
-	int milliSecs;
-	if ((ss >> milliSecs).fail())
-		return timePoint;
-
-	return timePoint + std::chrono::milliseconds(milliSecs);
+	return !(ss >> std::get_time(&tm, format.c_str())).fail();// TODO:  More thorough/more efficient check?
 }
 
-unsigned int GetNextChunk(std::istringstream& ss, std::string& chunk, std::chrono::system_clock::time_point& nextTime)
+std::string GetFormatBeforeMilliseconds(const std::string& format)
+{
+	const std::string milliId("%_");
+	const auto milliPos(format.find(milliId));
+	if (milliPos != std::string::npos)
+	{
+		assert(format.length() == milliPos + milliId.length());// Currently does not support milliseconds anywhere except at the end
+		return format.substr(0, milliPos);
+	}
+
+	return format;
+}
+
+std::chrono::system_clock::time_point GetTimeStamp(const std::string& line, const std::string& timestampFormat)
+{
+	const std::string format(GetFormatBeforeMilliseconds(timestampFormat));
+
+	std::istringstream ss(line);
+	std::tm tm;
+	ss >> std::get_time(&tm, format.c_str());
+	auto timePoint(std::chrono::system_clock::from_time_t(std::mktime(&tm)));
+
+	if (timestampFormat.length() != format.length())
+	{
+		int milliSecs;
+		if ((ss >> milliSecs).fail())
+			return timePoint;
+		 timePoint += std::chrono::milliseconds(milliSecs);
+	}
+
+	return timePoint;
+}
+
+unsigned int GetNextChunk(std::istringstream& ss, std::string& chunk,
+	std::chrono::system_clock::time_point& nextTime, const std::string& timestampFormat)
 {
 	assert(chunk.empty());
 
@@ -53,9 +66,9 @@ unsigned int GetNextChunk(std::istringstream& ss, std::string& chunk, std::chron
 	{
 		chunk.append(line + '\n');
 		++lineCount;
-		if (Utilities::LineHasTimestamp(line))
+		if (Utilities::LineHasTimestamp(line, timestampFormat))
 		{
-			nextTime = Utilities::GetTimeStamp(line);
+			nextTime = Utilities::GetTimeStamp(line, timestampFormat);
 			break;
 		}
 	}

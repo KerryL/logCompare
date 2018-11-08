@@ -30,12 +30,13 @@ bool LogFile::ReadFile(const std::string& fileName, std::string& contents)
 	return true;
 }
 
-void LogFileComparer::AddLog(const std::string& contents)
+void LogFileComparer::AddLog(const std::string& contents, const std::string& timestampFormat)
 {
 	RefPoint r;
 	r.ss.str(contents);
+	r.timestampFormat = timestampFormat;
 
-	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime);
+	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime, r.timestampFormat);
 	refs.push_back(std::move(r));
 
 	if (!contents.empty() && r.nextTime < nextPrintTime)
@@ -48,7 +49,7 @@ void LogFileComparer::AddChunk(RefPoint& r)
 	r.text.append(r.nextChunk);
 	r.linesAddedSincePrint = 0;
 	r.nextChunk.clear();
-	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime);
+	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime, r.timestampFormat);
 }
 
 void LogFileComparer::DoComparison()

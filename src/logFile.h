@@ -28,7 +28,7 @@ private:
 class LogFileComparer
 {
 public:
-	void AddLog(const std::string& contents);
+	void AddLog(const std::string& contents, const std::string& timestampFormat);
 	void LogFileComparer::DoComparison();
 	std::string GetText(const unsigned int& i) const { return refs[i].text; }
 
@@ -39,6 +39,7 @@ private:
 		std::chrono::system_clock::time_point nextTime;
 		std::string text;
 		std::string nextChunk;
+		std::string timestampFormat;
 		unsigned int linesAdded;
 		unsigned int linesAddedSincePrint = 0;
 	};
