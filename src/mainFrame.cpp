@@ -7,10 +7,7 @@
 #include "mainFrame.h"
 #include "logFileWindow.h"
 #include "logCompareApp.h"
-#include "utilities.h"
-
-// Standard C++ headers
-#include <sstream>
+#include "logFile.h"
 
 //==========================================================================
 // Class:			MainFrame
@@ -116,81 +113,14 @@ void MainFrame::SetProperties()
 
 void MainFrame::UpdateComparison()
 {
-	struct RefPoint
-	{
-		LogFileWindow* logWindow;
-		std::istringstream ss;
-		std::chrono::system_clock::time_point nextTime;
-		std::string text;
-		std::string nextChunk;
-		unsigned int linesAdded;
-		unsigned int linesAddedSincePrint = 0;
-	};
-
-	std::chrono::system_clock::time_point nextPrintTime = std::chrono::system_clock::time_point::max();
-	std::vector<RefPoint> refs;
+	LogFileComparer comparer;
 	for (const auto& w : logWindows)
-	{
-		if (w->GetOriginalContents().empty())
-			continue;
+		comparer.AddLog(w->GetOriginalContents());
 
-		RefPoint r;
-		r.logWindow = w;
-		r.ss.str(w->GetOriginalContents());
+	comparer.DoComparison();
 
-		r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime);
-		refs.push_back(std::move(r));
-
-		if (r.nextTime < nextPrintTime)
-			nextPrintTime = r.nextTime;
-	}
-
-	unsigned int maxLinesAdded(1);
-	while (maxLinesAdded > 0)
-	{
-		maxLinesAdded = 0;
-		std::vector<RefPoint*> addedTo;
-		for (auto& r : refs)
-		{
-			if (r.nextTime <= nextPrintTime)
-			{
-				r.text.append(r.linesAddedSincePrint, '\n');
-				r.text.append(r.nextChunk);
-				r.linesAddedSincePrint = 0;
-				r.nextChunk.clear();
-
-				r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime);
-				addedTo.push_back(&r);
-				if (r.linesAdded > maxLinesAdded)
-					maxLinesAdded = r.linesAdded;
-			}
-		}
-
-		nextPrintTime = std::chrono::system_clock::time_point::max();
-		for (auto& r : refs)
-		{
-			bool added(false);
-			for (const auto& a : addedTo)
-			{
-				if (a == &r)
-				{
-					added = true;
-					break;
-				}
-			}
-
-			if (added)
-				r.linesAddedSincePrint = maxLinesAdded - r.linesAdded;
-			else
-				r.linesAddedSincePrint += maxLinesAdded;
-
-			if (r.nextTime < nextPrintTime)
-				nextPrintTime = r.nextTime;
-		}
-	}
-
-	for (const auto& r : refs)
-		r.logWindow->SetText(r.text);
+	for (unsigned int i = 0; i < logWindows.size(); ++i)
+		logWindows[i]->SetText(comparer.GetText(i));
 }
 
 void MainFrame::AddLogWindow()

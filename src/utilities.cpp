@@ -63,4 +63,18 @@ unsigned int GetNextChunk(std::istringstream& ss, std::string& chunk, std::chron
 	return lineCount;
 }
 
+std::string ExtractFileName(const std::string& s)
+{
+#ifdef _WIN32
+	const auto lastSlash(s.find_last_of('\\'));
+#else
+	const auto lastSlash(s.find_last_of('/'));
+#endif
+
+	if (lastSlash == std::string::npos || s.length() == lastSlash)
+		return s;
+
+	return s.substr(lastSlash + 1);
+}
+
 }// namespace Utilities

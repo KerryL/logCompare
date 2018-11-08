@@ -9,12 +9,14 @@
 // wxWidgets headers
 #include <wx/wx.h>
 #include <wx/stc/stc.h>
+#include <wx/fdrepdlg.h>
 
 // Standard C++ headers
 #include <memory>
 
 class MainFrame;
 class LogFile;
+class FindDialog;
 
 class LogFileWindow : public wxPanel
 {
@@ -34,27 +36,50 @@ public:
 	std::string GetOriginalContents() const;
 	void SetScrollPosition(const unsigned int& position);
 
+	void DoFind(const wxString& s, const int& flags);
+	void ClearFind();
+
 private:
 	MainFrame& parent;
 	std::unique_ptr<LogFile> logFile;
+	std::unique_ptr<FindDialog> dialog;
 
 	void CreateControls(const ButtonConfig& buttonConfig);
 	wxSizer* CreateButtonSizer(const ButtonConfig& buttonConfig);
 
 	wxStyledTextCtrl* mainTextCtrl;
+	wxStaticText* fileNameText;
 
 	enum EventIDs
 	{
 		IdOpen,
 		IdAdd,
-		IdRemove
+		IdRemove,
+		IdFind
 	};
 
 	void OnOpenClick(wxCommandEvent& event);
 	void OnAddClick(wxCommandEvent& event);
 	void OnRemoveClick(wxCommandEvent& event);
+	void OnFindShortcut(wxCommandEvent& event);
 
 	void OnScrollChange(wxStyledTextEvent& event);
+
+	DECLARE_EVENT_TABLE()
+};
+
+class FindDialog : public wxFindReplaceDialog
+{
+public:
+	FindDialog(LogFileWindow& parent);
+
+private:
+	LogFileWindow& parent;
+
+	wxFindReplaceData data;
+
+	void OnFindNextEvent(wxFindDialogEvent& event);
+	void OnCloseEvent(wxFindDialogEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };

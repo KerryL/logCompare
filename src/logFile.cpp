@@ -5,6 +5,7 @@
 
 // Local headers
 #include "logFile.h"
+#include "utilities.h"
 
 // Standard C++ headers
 #include <fstream>
@@ -27,4 +28,76 @@ bool LogFile::ReadFile(const std::string& fileName, std::string& contents)
 		contents += line + '\n';
 
 	return true;
+}
+
+void LogFileComparer::AddLog(const std::string& contents)
+{
+	RefPoint r;
+	r.ss.str(contents);
+
+	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime);
+	refs.push_back(std::move(r));
+
+	if (!contents.empty() && r.nextTime < nextPrintTime)
+		nextPrintTime = r.nextTime;
+}
+
+void LogFileComparer::AddChunk(RefPoint& r)
+{
+	r.text.append(r.linesAddedSincePrint, '\n');
+	r.text.append(r.nextChunk);
+	r.linesAddedSincePrint = 0;
+	r.nextChunk.clear();
+	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime);
+}
+
+void LogFileComparer::DoComparison()
+{
+	unsigned int maxLinesAdded(1);
+	while (maxLinesAdded > 0)
+	{
+		maxLinesAdded = 0;
+		std::vector<RefPoint*> addedTo;
+		for (auto& r : refs)
+		{
+			if (r.nextTime <= nextPrintTime)
+			{
+				AddChunk(r);
+				addedTo.push_back(&r);
+
+				if (r.linesAdded > maxLinesAdded)
+					maxLinesAdded = r.linesAdded;
+			}
+		}
+
+		nextPrintTime = std::chrono::system_clock::time_point::max();
+		for (auto& r : refs)
+		{
+			if (r.ss.str().empty())
+				continue;
+
+			AdjustLinesAdded(maxLinesAdded, r, addedTo);
+			if (r.nextTime < nextPrintTime)
+				nextPrintTime = r.nextTime;
+		}
+	}
+}
+
+void LogFileComparer::AdjustLinesAdded(const unsigned int& maxLinesAdded, RefPoint& r,
+	const std::vector<RefPoint*>& addedTo)
+{
+	bool added(false);
+	for (const auto& a : addedTo)
+	{
+		if (a == &r)
+		{
+			added = true;
+			break;
+		}
+	}
+
+	if (added)
+		r.linesAddedSincePrint = maxLinesAdded - r.linesAdded;
+	else
+		r.linesAddedSincePrint += maxLinesAdded;
 }

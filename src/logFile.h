@@ -9,6 +9,8 @@
 // Standard C++ headers
 #include <chrono>
 #include <string>
+#include <sstream>
+#include <vector>
 
 class LogFile
 {
@@ -21,6 +23,32 @@ private:
 	std::string originalFileContents;
 
 	static bool ReadFile(const std::string& fileName, std::string& contents);
+};
+
+class LogFileComparer
+{
+public:
+	void AddLog(const std::string& contents);
+	void LogFileComparer::DoComparison();
+	std::string GetText(const unsigned int& i) const { return refs[i].text; }
+
+private:
+	struct RefPoint
+	{
+		std::istringstream ss;
+		std::chrono::system_clock::time_point nextTime;
+		std::string text;
+		std::string nextChunk;
+		unsigned int linesAdded;
+		unsigned int linesAddedSincePrint = 0;
+	};
+
+	std::chrono::system_clock::time_point nextPrintTime = std::chrono::system_clock::time_point::max();
+	std::vector<RefPoint> refs;
+
+	void AddChunk(RefPoint& r);
+	void AdjustLinesAdded(const unsigned int& maxLinesAdded, RefPoint& r,
+		const std::vector<RefPoint*>& addedTo);
 };
 
 #endif// LOG_FILE_H_
