@@ -45,13 +45,24 @@ void LogFileWindow::CreateControls(const ButtonConfig& buttonConfig)
 	wxSizer* mainSizer(new wxBoxSizer(wxVERTICAL));
 	mainSizer->Add(CreateButtonSizer(buttonConfig), wxSizerFlags().Expand());
 
-	wxSizer* timestampSizer(new wxBoxSizer(wxHORIZONTAL));
-	timestampSizer->Add(new wxStaticText(this, wxID_ANY, _T("TS Format:")));
+	wxFlexGridSizer* inputSizer(new wxFlexGridSizer(2, 5, 5));
+	inputSizer->AddGrowableCol(1);
+
+	inputSizer->Add(new wxStaticText(this, wxID_ANY, _T("TS Format:")));
 	timestampTextCtrl = new wxTextCtrl(this, wxID_ANY, _T("%m/%d/%Y,%H:%M:%S:%_"));
 	timestampTextCtrl->SetToolTip(_T("Timestamp formats can be described using standard C language identifiers.  Additionally, %_ is supported to indicate a 3-digit millisecond field."));
 
-	timestampSizer->Add(timestampTextCtrl, wxSizerFlags().Expand().Proportion(1).Border(wxLEFT, 5));
-	mainSizer->Add(timestampSizer, wxSizerFlags().Expand().Border(wxALL, 5));
+	inputSizer->Add(timestampTextCtrl, wxSizerFlags().Expand().Proportion(1));
+
+	inputSizer->Add(new wxStaticText(this, wxID_ANY, _T("Offset:")));
+	wxSizer* offsetSizer(new wxBoxSizer(wxHORIZONTAL));
+	offsetTextCtrl = new wxTextCtrl(this, wxID_ANY, _T("0"));
+	offsetTextCtrl->SetToolTip(_T("Offset is added to timestamp (positive times move timestamps forward in time)."));
+	offsetSizer->Add(offsetTextCtrl, wxSizerFlags().Expand().Proportion(1));
+	offsetSizer->Add(new wxStaticText(this, wxID_ANY, _T("sec")), wxSizerFlags().Border(wxLEFT, 5));
+
+	inputSizer->Add(offsetSizer, wxSizerFlags().Expand().Proportion(1));
+	mainSizer->Add(inputSizer, wxSizerFlags().Expand().Border(wxALL, 5));
 
 	mainTextCtrl = new wxStyledTextCtrl(this);
 	mainTextCtrl->SetDropTarget(new DropTarget(*this));
@@ -99,7 +110,7 @@ BEGIN_EVENT_TABLE(LogFileWindow, wxPanel)
 	EVT_BUTTON(IdRemove,		OnRemoveClick)
 	EVT_MENU(IdFind,			OnFindShortcut)
 	EVT_STC_PAINTED(wxID_ANY,	OnScrollChange)
-	EVT_TEXT(wxID_ANY,			OnTimestampFormatChange)
+	EVT_TEXT(wxID_ANY,			OnTextInputChange)
 END_EVENT_TABLE()
 
 void LogFileWindow::OnOpenClick(wxCommandEvent& WXUNUSED(event))
@@ -162,7 +173,7 @@ void LogFileWindow::OnScrollChange(wxStyledTextEvent& WXUNUSED(event))
 	parent.SetScrollPosition(line);
 }
 
-void LogFileWindow::OnTimestampFormatChange(wxCommandEvent& WXUNUSED(event))
+void LogFileWindow::OnTextInputChange(wxCommandEvent& WXUNUSED(event))
 {
 	parent.UpdateComparison();
 }
@@ -219,6 +230,14 @@ void LogFileWindow::ClearFind()
 std::string LogFileWindow::GetTimestampFormat() const
 {
 	return timestampTextCtrl->GetValue().ToStdString();
+}
+
+double LogFileWindow::GetOffset() const
+{
+	double offset;
+	if (!offsetTextCtrl->GetValue().ToDouble(&offset))
+		return 0.0;
+	return offset;
 }
 
 FindDialog::FindDialog(LogFileWindow& parent) : wxFindReplaceDialog(&parent, &data, _T("Find")), parent(parent)

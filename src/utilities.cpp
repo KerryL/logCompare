@@ -35,7 +35,7 @@ std::string GetFormatBeforeMilliseconds(const std::string& format)
 	return format;
 }
 
-std::chrono::system_clock::time_point GetTimeStamp(const std::string& line, const std::string& timestampFormat)
+TimePoint GetTimeStamp(const std::string& line, const std::string& timestampFormat)
 {
 	const std::string format(GetFormatBeforeMilliseconds(timestampFormat));
 
@@ -56,7 +56,7 @@ std::chrono::system_clock::time_point GetTimeStamp(const std::string& line, cons
 }
 
 unsigned int GetNextChunk(std::istringstream& ss, std::string& chunk,
-	std::chrono::system_clock::time_point& nextTime, const std::string& timestampFormat)
+	TimePoint& nextTime, const std::string& timestampFormat, const Duration& offset)
 {
 	assert(chunk.empty());
 
@@ -68,7 +68,7 @@ unsigned int GetNextChunk(std::istringstream& ss, std::string& chunk,
 		++lineCount;
 		if (Utilities::LineHasTimestamp(line, timestampFormat))
 		{
-			nextTime = Utilities::GetTimeStamp(line, timestampFormat);
+			nextTime = Utilities::GetTimeStamp(line, timestampFormat) + offset;
 			break;
 		}
 	}

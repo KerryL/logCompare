@@ -36,6 +36,7 @@ public:
 	std::string GetOriginalContents() const;
 	void SetScrollPosition(const unsigned int& position);
 	std::string GetTimestampFormat() const;
+	double GetOffset() const;
 
 	void DoFind(const wxString& s, const int& flags);
 	void ClearFind();
@@ -51,6 +52,7 @@ private:
 	wxStyledTextCtrl* mainTextCtrl;
 	wxStaticText* fileNameText;
 	wxTextCtrl* timestampTextCtrl;
+	wxTextCtrl* offsetTextCtrl;
 
 	enum EventIDs
 	{
@@ -64,7 +66,7 @@ private:
 	void OnAddClick(wxCommandEvent& event);
 	void OnRemoveClick(wxCommandEvent& event);
 	void OnFindShortcut(wxCommandEvent& event);
-	void OnTimestampFormatChange(wxCommandEvent& event);
+	void OnTextInputChange(wxCommandEvent& event);
 
 	void OnScrollChange(wxStyledTextEvent& event);
 

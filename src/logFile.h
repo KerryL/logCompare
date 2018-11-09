@@ -6,6 +6,9 @@
 #ifndef LOG_FILE_H_
 #define LOG_FILE_H_
 
+// Local headers
+#include "utilities.h"
+
 // Standard C++ headers
 #include <chrono>
 #include <string>
@@ -28,7 +31,7 @@ private:
 class LogFileComparer
 {
 public:
-	void AddLog(const std::string& contents, const std::string& timestampFormat);
+	void AddLog(const std::string& contents, const std::string& timestampFormat, const double& offset);
 	void LogFileComparer::DoComparison();
 	std::string GetText(const unsigned int& i) const { return refs[i].text; }
 
@@ -36,7 +39,8 @@ private:
 	struct RefPoint
 	{
 		std::istringstream ss;
-		std::chrono::system_clock::time_point nextTime;
+		Utilities::TimePoint nextTime;
+		Utilities::Duration offset;
 		std::string text;
 		std::string nextChunk;
 		std::string timestampFormat;
@@ -44,7 +48,7 @@ private:
 		unsigned int linesAddedSincePrint = 0;
 	};
 
-	std::chrono::system_clock::time_point nextPrintTime = std::chrono::system_clock::time_point::max();
+	Utilities::TimePoint nextPrintTime = Utilities::TimePoint::max();
 	std::vector<RefPoint> refs;
 
 	void AddChunk(RefPoint& r);

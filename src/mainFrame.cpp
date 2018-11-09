@@ -113,7 +113,7 @@ void MainFrame::UpdateComparison()
 {
 	LogFileComparer comparer;
 	for (const auto& w : logWindows)
-		comparer.AddLog(w->GetOriginalContents(), w->GetTimestampFormat());
+		comparer.AddLog(w->GetOriginalContents(), w->GetTimestampFormat(), w->GetOffset());
 
 	comparer.DoComparison();
 

@@ -5,11 +5,11 @@
 
 // Local headers
 #include "logFile.h"
-#include "utilities.h"
 
 // Standard C++ headers
 #include <fstream>
 #include <exception>
+#include <iomanip>
 
 LogFile::LogFile(const std::string& fileName)
 {
@@ -30,13 +30,14 @@ bool LogFile::ReadFile(const std::string& fileName, std::string& contents)
 	return true;
 }
 
-void LogFileComparer::AddLog(const std::string& contents, const std::string& timestampFormat)
+void LogFileComparer::AddLog(const std::string& contents, const std::string& timestampFormat, const double& offset)
 {
 	RefPoint r;
 	r.ss.str(contents);
 	r.timestampFormat = timestampFormat;
+	r.offset = std::chrono::duration<double>(offset);
 
-	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime, r.timestampFormat);
+	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime, r.timestampFormat, r.offset);
 	refs.push_back(std::move(r));
 
 	if (!contents.empty() && r.nextTime < nextPrintTime)
@@ -49,7 +50,7 @@ void LogFileComparer::AddChunk(RefPoint& r)
 	r.text.append(r.nextChunk);
 	r.linesAddedSincePrint = 0;
 	r.nextChunk.clear();
-	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime, r.timestampFormat);
+	r.linesAdded = Utilities::GetNextChunk(r.ss, r.nextChunk, r.nextTime, r.timestampFormat, r.offset);
 }
 
 void LogFileComparer::DoComparison()
@@ -71,7 +72,7 @@ void LogFileComparer::DoComparison()
 			}
 		}
 
-		nextPrintTime = std::chrono::system_clock::time_point::max();
+		nextPrintTime = Utilities::TimePoint::max();
 		for (auto& r : refs)
 		{
 			if (r.ss.str().empty())
