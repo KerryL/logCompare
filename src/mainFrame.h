@@ -35,7 +35,11 @@ private:
 
 	std::vector<LogFileWindow*> logWindows;
 
+	void OnClose(wxCloseEvent& event);
+
 	//wxWindow* CreateVersionText(wxWindow *parent);
+
+	DECLARE_EVENT_TABLE();
 };
 
 #endif// MAIN_FRAME_H_

@@ -35,6 +35,26 @@ MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, wxEmptyString,
 
 //==========================================================================
 // Class:			MainFrame
+// Function:		Event Table
+//
+// Description:		Links GUI events with event handler functions.
+//
+// Input Arguments:
+//		None
+//
+// Output Arguments:
+//		None
+//
+// Return Value:
+//		None
+//
+//==========================================================================
+BEGIN_EVENT_TABLE(MainFrame, wxFrame)
+	EVT_CLOSE(MainFrame::OnClose)
+END_EVENT_TABLE();
+
+//==========================================================================
+// Class:			MainFrame
 // Function:		CreateControls
 //
 // Description:		Creates sizers and controls and lays them out in the window.
@@ -165,4 +185,12 @@ void MainFrame::SetScrollPosition(const unsigned int& position)
 {
 	for (auto& w : logWindows)
 		w->SetScrollPosition(position);
+}
+
+void MainFrame::OnClose(wxCloseEvent& event)
+{
+	if (!IsActive())
+		wxQueueEvent(this, new wxActivateEvent());// fix for application not closing if closed from taskbar when not focused; see https://forums.wxwidgets.org/viewtopic.php?t=43498
+
+	event.Skip();
 }
