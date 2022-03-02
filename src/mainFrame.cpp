@@ -154,8 +154,7 @@ void MainFrame::AddLogWindow()
 	logWindows.push_back(new LogFileWindow(*this, buttonConfig));
 	mainSizer->Add(logWindows.back(), wxSizerFlags().Expand().Proportion(1));
 
-	PostSizeEvent();
-	// TODO:  Need to update min size?  Why isn't this automatic?
+	Fit();
 }
 
 void MainFrame::RemoveLogWindow(LogFileWindow* window)
@@ -179,6 +178,8 @@ void MainFrame::RemoveLogWindow(LogFileWindow* window)
 		}
 		assert(false);// should never reach here
 	}
+
+	// TODO:  Need some clever risizing bit here - make window smaller if ??? but not if user intentionally made window bigger?
 }
 
 void MainFrame::SetScrollPosition(const unsigned int& position)
